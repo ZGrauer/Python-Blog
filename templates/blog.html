@@ -1,0 +1,7 @@
+{% extends "front.html" %}
+  {% block content %}
+
+  {% for p in posts %}
+    {{ p.render_overview() | safe }}
+  {% endfor %}
+{% endblock %}

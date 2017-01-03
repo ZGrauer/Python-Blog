@@ -1,0 +1,51 @@
+{% extends "front.html" %}
+{% block content %}
+  <form method="post">
+    <h2>Add Blog Post</h2>
+    <div class="form-group row">
+      <label for="title" class="col-xs-2 col-form-label">Title</label>
+      <div class="col-xs-10">
+        <input class="form-control" type="text" value="{{title}}" name="title" id="title" placeholder="Title" required>
+      </div>
+    </div>
+    <div class="form-group row">
+      <label for="content" class="col-xs-2 col-form-label">Content</label>
+      <div class="col-xs-10">
+        <textarea class="form-control art-input" name="content" id="content" rows="15" placeholder="Content (HTML/Text)" required>{{content}}</textarea>
+      </div>
+    </div>
+      <div class="error">{{error}}</div>
+    <button type="button" data-toggle="modal" name="preview" class="open-PreviewDialog btn" href="#preview">Preview Post</button>
+    <input type="submit" class="btn btn-primary" />
+  </form>
+  
+  <div class="modal fade" id="preview" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+      <div class="modal-header">
+        <button class="close" data-dismiss="modal">×</button>
+        <h3 class="modal-title">Post Preview</h3>
+      </div>
+      <div class="modal-body">
+        <article class="post">
+          <div class="row post-heading">
+            <div class="col-xs-10">
+              <h3 class="post-title text-left" id=post-title-prev></h3>
+            </div>
+            <div class="col-xs-2">
+              <h4 class="post-date text-right">Date</h4>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="post-content" id=post-content-prev></div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+    </div>
+    </div>
+  </div>
+
+{% endblock %}

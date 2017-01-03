@@ -1,0 +1,32 @@
+<article class="post">
+  <div class="row post-heading">
+    <div class="col-xs-10">
+      <a href="/blog/{{p.key().id()}}">
+        <h3 class="post-title text-left">{{p.title}}</h3>
+      </a>
+    </div>
+    <div class="col-xs-2">
+      <h4 class="post-date text-right">{{p.created.strftime("%b %d, %Y")}}</h4>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="post-author">
+        By {{post_username}}
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="post-content post-overview">
+        <p>
+          {{p._render_text | safe}}
+        </p>
+        <p>
+          <p class="read-more">
+            <a href="/blog/{{p.key().id()}}" class="btn btn-primary btn-sm active" role="button">Read More</a></p>
+        </p>
+      </div>
+    </div>
+  </div>
+</article>
