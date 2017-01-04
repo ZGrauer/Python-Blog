@@ -1,5 +1,40 @@
 {% extends "front.html" %}
 
 {% block content %}
-  {{post.render() | safe}}
+<article class="post">
+  <div class="row post-heading">
+    <div class="col-xs-10">
+      <h3 class="post-title text-left">{{post.title | safe}}</h3>
+    </div>
+    <div class="col-xs-2">
+      <h4 class="post-date text-right">{{post.created.strftime("%b %d, %Y")}}</h4>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="post-author">
+        By {{post_username}}
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="post-content">
+        {{post._render_text | safe}}
+      </div>
+    </div>
+  </div>
+  <p>Score <span class="badge">{{post.likes}}</span></p>
+  {% if username != post_username %}
+    <form method="post">
+      <button type="submit" name="action" value="like" class="btn btn-primary btn-sm">
+        <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+      </button>
+      <button type="submit" name="action" value="dislike" class="btn btn-primary btn-sm">
+        <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+      </button>
+    </form>
+  {% endif %}
+</article>
+
 {% endblock %}

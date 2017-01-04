@@ -25,15 +25,25 @@ def blog_key(name = 'default'):
     return db.Key.from_path('blogs', name)
 
 class BlogHandler(webapp2.RequestHandler):
+    def initialize(self, *a, **kw):
+        '''
+        Called before every request in appengine
+        Checks for user cookie, if pressent set User object
+        '''
+        webapp2.RequestHandler.initialize(self, *a, **kw)
+        uid = self.read_secure_cookie('username')
+        self.user = uid and User.by_id(int(uid))
+
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
     def render_str(self, template, **params):
         params['user'] = self.user
-        return render_str(template, **params)
+        t = jinja_env.get_template(template)
+        return t.render(params)
 
-    def render(self, template, **kw):
-        self.write(self.render_str(template, **kw))
+    def render(self, template, **params):
+        self.write(self.render_str(template, **params))
 
     def set_secure_cookie(self, name, val):
         '''
@@ -62,15 +72,6 @@ class BlogHandler(webapp2.RequestHandler):
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'username=; Path=/')
 
-    def initialize(self, *a, **kw):
-        '''
-        Called before every request in appengine
-        Checks for user cookie, if pressent set User object
-        '''
-        webapp2.RequestHandler.initialize(self, *a, **kw)
-        uid = self.read_secure_cookie('username')
-        self.user = uid and User.by_id(int(uid))
-
 class BlogFront(BlogHandler):
     def get(self):
         posts = greetings = Post.all().order('-created')
@@ -84,13 +85,39 @@ class PostPage(BlogHandler):
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
-
+        post._render_text = post.content.replace('\n', '<br>')
+                   
         if not post:
             self.error(404)
             return
 
-        self.render("permalink.html", post = post)
+        if self.user:
+            self.render("permalink.html", post = post,
+                        username = self.user.username,
+                        post_username=User.by_id(post.user_id).username)
+        else:
+            self.render("permalink.html", post = post, username = "Login",
+                        post_username=User.by_id(post.user_id).username)
 
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        post._render_text = post.content.replace('\n', '<br>')
+        post_action = self.request.get("action")
+        if post_action=="like":
+            post.likes += 1
+            post.put()
+        elif post_action=="dislike":
+            post.likes -= 1
+            post.put()
+        if self.user:
+            self.render("permalink.html", post = post,
+                        username = self.user.username,
+                        post_username=User.by_id(post.user_id).username)
+        else:
+            self.render("permalink.html", post = post, username = "Login",
+                        post_username=User.by_id(post.user_id).username)
+        
 class NewPost(BlogHandler):
     def get(self):
         if self.user:
@@ -178,19 +205,10 @@ class Post(db.Model):
     title = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
     user_id = db.IntegerProperty(required = True)
+    likes = db.IntegerProperty(default=0)
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
     
-
-    def render(self):
-        '''
-        Replace user new lines with HTML breaks.
-        Generate HTML for post data. HTML in data not escaped
-        '''
-        self._render_text = self.content.replace('\n', '<br>')
-        return render_str("post.html", p = self,
-                          post_username=User.by_id(self.user_id).username)
-
     def render_overview(self):
         '''
         Replace user new lines with HTML breaks.

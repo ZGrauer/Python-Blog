@@ -2,7 +2,7 @@
   <div class="row post-heading">
     <div class="col-xs-10">
       <a href="/blog/{{p.key().id()}}">
-        <h3 class="post-title text-left">{{p.title}}</h3>
+        <h3 class="post-title text-left">{{p.title | safe}}</h3>
       </a>
     </div>
     <div class="col-xs-2">
@@ -10,10 +10,13 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-xs-12">
+    <div class="col-xs-6">
       <div class="post-author">
         By {{post_username}}
       </div>
+    </div>
+    <div class="col-xs-6">
+      <div class="text-right">Score <span class="badge">{{p.likes}}</span></div>
     </div>
   </div>
   <div class="row">

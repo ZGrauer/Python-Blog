@@ -2,7 +2,7 @@
   <div class="row post-heading">
     <div class="col-xs-10">
       <a href="/blog/{{p.key().id()}}">
-        <h3 class="post-title text-left">{{p.title}}</h3>
+        <h3 class="post-title text-left">{{p.title | safe}}</h3>
       </a>
     </div>
     <div class="col-xs-2">
@@ -23,4 +23,17 @@
       </div>
     </div>
   </div>
+  <p>Score <span class="badge">{{p.likes}}</span></p>
+  {% if username %}
+    <form method="post">
+      <button type="submit" name="action" value="like" class="btn btn-primary btn-sm">
+        <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+      </button>
+      <button type="submit" name="action" value="dislike" class="btn btn-primary btn-sm">
+        <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+      </button>
+    </form>
+  {% endif %}
+  User: {{username}}
+  Post: {{post_username}}
 </article>
