@@ -4,29 +4,31 @@
     <h2>Sign up</h2>
     <div class="form-group row">
       <label for="username" class="col-xs-2 col-form-label">Username</label>
-      <div class="col-xs-10">
-        <input class="form-control" type="text" value="{{username}}" name="username" id="username" placeholder="Username" required>
+      <div class="col-xs-4">
+        <input class="form-control" type="text" value="{{username}}" name="username" placeholder="Username" required pattern="[A-Za-z]{3,20}" title="3 to 20 letters, upper or lowercase">
       </div>
     </div>
     <div class="form-group row">
       <label for="pwd1" class="col-xs-2 col-form-label">Password</label>
-      <div class="col-xs-10">
-        <input class="form-control" type="password" value="{{pwd1}}" name="pwd1" id="pwd1" placeholder="Password" required>
+      <div class="col-xs-4">
+        <input class="form-control" type="password" value="{{pwd1}}" name="pwd1" placeholder="Password" required required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$" title="Minimum 8 characters at least 1 uppercase, 1 lowercase and 1 number">
       </div>
     </div>
     <div class="form-group row">
       <label for="pwd2" class="col-xs-2 col-form-label">Verify</label>
-      <div class="col-xs-10">
-        <input class="form-control" type="password" value="{{pwd2}}" name="pwd2" id="pwd2" placeholder="Verify" required>
+      <div class="col-xs-4">
+        <input class="form-control" type="password" value="{{pwd2}}" name="pwd2" placeholder="Verify" required required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$" title="Minimum 8 characters at least 1 uppercase, 1 lowercase and 1 number">
       </div>
     </div>
     <div class="form-group row">
       <label for="email" class="col-xs-2 col-form-label">Email (optional)</label>
-      <div class="col-xs-10">
-        <input class="form-control" type="email" value="{{email}}" name="email" id="email" placeholder="Email (optional)" >
+      <div class="col-xs-4">
+        <input class="form-control" type="email" value="{{email}}" name="email" placeholder="Email (optional)" >
       </div>
     </div>
-    <div class="error">{{error}}</div>
+    {% if error %}
+      <div class="alert alert-danger" role="alert">{{error}}</div>
+    {% endif %}
     <input type="submit" class="btn btn-primary" />
   </form>
 

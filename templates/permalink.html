@@ -3,18 +3,23 @@
 {% block content %}
   <article class="post">
     <div class="row post-heading">
-      <div class="col-xs-10">
+      <div class="col-xs-8">
         <h3 class="post-title text-left">{{post.title | safe}}</h3>
       </div>
-      <div class="col-xs-2">
+      <div class="col-xs-4">
         <h4 class="post-date text-right">{{post.created.strftime("%b %d, %Y")}}</h4>
       </div>
     </div>
     <div class="row">
-      <div class="col-xs-12">
+      <div class="col-xs-6">
         <div class="post-author">
           By {{post_username}}
         </div>
+      </div>
+      <div class="col-xs-6">
+        <div class="text-right like-area">
+          <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true">
+          </span> <span class="badge">{{post.likes}}</span></div>
       </div>
     </div>
     <div class="row">
@@ -24,28 +29,30 @@
         </div>
       </div>
     </div>
-    <p>Score <span class="badge">{{post.likes}}</span></p>
   </article>
-  {% if user and username != post_username %}
-    <form method="post" class="post-control">
-      <button type="submit" name="action" value="like" class="btn btn-primary btn-sm">
-        <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
-      </button>
-      <button type="submit" name="action" value="dislike" class="btn btn-primary btn-sm">
-        <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
-      </button>
-    </form>
-  {% endif %}
-  {% if username == post_username %}
-    <form method="post" class="post-control">
-      <button type="button" name="edit" class="btn btn-default" data-toggle="modal" href="#edit">
-        Edit Post
-      </button>
-      <button type="submit" name="action" value="delete" class="btn btn-danger" onclick="return confirmDelete()">
-        Delete Post
-      </button>
-    </form>
-  {% endif %}
+
+  <div class="row">
+    {% if user and username != post_username %}
+      <form method="post" class="post-control">
+        <button type="submit" name="action" value="like" class="btn btn-primary btn-sm">
+          <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+        </button>
+        <button type="submit" name="action" value="dislike" class="btn btn-primary btn-sm">
+          <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+        </button>
+      </form>
+    {% endif %}
+    {% if username == post_username %}
+      <form method="post" class="post-control">
+        <button type="button" name="edit" class="btn btn-default" data-toggle="modal" href="#edit">
+          Edit Post
+        </button>
+        <button type="submit" name="action" value="delete" class="btn btn-danger" onclick="return confirmDelete()">
+          Delete Post
+        </button>
+      </form>
+    {% endif %}
+  </div>
 
   <div class="modal fade" id="edit" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg">
@@ -76,37 +83,41 @@
     </div>
   </div>
 
-{% if user %}
-  <form method="post" class="post-control">
-    <div class="form-group row">
-      <label for="content" class="col-xs-2 col-form-label">Comment</label>
-      <div class="col-xs-10">
-        <textarea class="form-control" name="comment_content" id="comment_content" rows="4" placeholder="Comment" required></textarea>
-      </div>
+  <div class="row">
+    <div class="col-xs-12">
+      {% if user %}
+        <form method="post" class="post-control">
+          <label for="content" class="col-xs-2 col-form-label">Comment</label>
+          <textarea class="form-control" name="comment_content" id="comment_content" rows="3" placeholder="Comment" required></textarea>
+          <button type="submit" name="action" value="add_comment" class="btn btn-primary">
+            Add Comment
+          </button>
+        </form>
+      {% endif %}
     </div>
-    <button type="submit" name="action" value="add_comment" class="btn btn-primary">
-      Add Comment
-    </button>
-  </form>
-{% endif %}
+  </div>
 
-  <table class="table table-hover">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Date</th>
-        <th>Comment</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for c in comments %}
-        <tr>
-          <td>{{c.get_username()}}</td>
-          <td>{{c.created.strftime("%b %d, %Y %H:%M")}}</td>
-          <td>{{c.content}}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="row">
+    <div class="col-xs-12">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th class="table-hide-col">Date</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in comments %}
+            <tr>
+              <td>{{c.get_username()}}</td>
+              <td class="table-hide-col">{{c.created.strftime("%b %d, %Y %H:%M")}}</td>
+              <td>{{c.content}}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 {% endblock %}

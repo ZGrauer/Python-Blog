@@ -8,18 +8,6 @@
   margin: 10px 15px 0 10px;
 }
 
-.title {
-  font-size: 30px;
-  font-weight: 300;
-  letter-spacing:2px;
-  margin: 15px 15px 0 10px;
-}
-
-.logo-img {
-  margin: 0 auto;
-  margin-top: 45px;
-}
-
 hr {
   border: none;
   height: 3px;
@@ -96,10 +84,6 @@ article {
   padding-bottom: 30px;
 }
 
-.error {
-  color: red;
-}
-
 .post-date {
   margin-top: 20px;
 }
@@ -119,10 +103,6 @@ article {
   margin-top: 25px;
 }
 
-.post-author {
-  font-weight: bold;
-}
-
 .post-content {
   margin-top: 15px;
   margin-bottom: 30px;
@@ -133,7 +113,7 @@ article {
 }
 
 .post-overview {
-  max-height: 200px;
+  max-height: 250px;
   position: relative;
   overflow: hidden;
 }
@@ -151,168 +131,27 @@ article {
   background-image: linear-gradient(to bottom, transparent, white);
 }
 
-/* Colors */
-.highlight-color {
-  color: #fc8;
-}
 
-.dark-color {
-  color: #191919;
-}
-
-
-/* Headings and Typography */
-[class*="brandico-"]:before {
-  font-family: 'brandico', sans-serif;
+/* Typography */
+.like-area {
   font-size: 18px;
-  padding-right: 5px;
 }
 
-.linkedin,
-.linkedin:visited {
-  background-color: #0077b5;
-  color: #fff;
-}
-
-.linkedin:hover,
-.linkedin:active,
-.linkedin:focus {
-  background-color: #00a0dc;
-  color: #fff;
-}
-
-.github,
-.github:visited {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.github:hover,
-.github:active,
-.github:focus {
-  background-color: #999;
-  color: #333;
-}
-
-.page-heading {
-  font-size: 28px;
-  font-weight: 400;
-  letter-spacing: 2px;
-  margin: 20px 10px;
-}
-
-.proj-title {
-  font-size: 26px;
-  font-weight: 300;
-  letter-spacing:2px;
-  margin: 5px;
-}
-
-.section-title {
-  font-size: 24px;
-  font-weight: 300;
-  letter-spacing:2px;
-  margin: 20px 0;
-}
-
-.work-proj-title,
-.degree {
-  font-size: 18px;
-  font-weight: 300;
-  letter-spacing:1px;
-  margin: 20px 0;
+.post-author {
+  font-weight: bold;
 }
 
 
-/* Links */
-/*main a:hover {
-  color: #fc8;
-}
-
-a {
-  color: #59c;
-}*/
-
-
-/* Panels & Tables */
-.panel {
-  background-color: #191919;
-  max-width: 80%;
-}
-
-.panel-default>.panel-heading {
-  background-color: #555;
-  color: inherit;
-  font-size: 18px;
-  letter-spacing: 1px;
-}
-
+/* Tables */
 th {
-  letter-spacing: 1px;
   font-weight: 300;
   font-size: 18px;
 }
 
-
-/* Media queries for screen size  */
-@media only screen and (max-width: 990px) {
-  h1,
-  h2,
-  h3,
-  h4 {
-    letter-spacing:1px;
-  }
-
+/* Media Queries */
+@media only screen and (max-width: 500px) {
   .name {
-    font-size: 36px;
-    font-weight: 500;
-    margin: 25px 10px 0 10px;
-  }
-
-  .title {
-    font-size: 22px;
-    margin: 30px 10px 0 10px;
-  }
-  .page-heading {
-    font-size: 20px;
-  }
-
-  .proj-title  {
-    font-size: 22px;
-  }
-
-  .table-hide-col {
-    display: none;
-  }
-}
-
-@media only screen and (max-width: 640px) {
-  .name {
-    font-size: 28px;
-    margin: 25px 10px 0 10px;
-  }
-
-  .title {
-    font-size: 20px;
-    margin: 35px 10px 0 10px;
-  }
-}
-
-@media only screen and (max-width: 400px) {
-  .name {
-    font-size: 22px;
+    font-size: 24px;
     margin: 15px 10px 0 5px;
-  }
-
-  .title {
-    font-size: 20px;
-    margin: 15px 10px 0 5px;
-  }
-  .page-heading {
-    font-size: 18px;
-  }
-
-  .proj-title  {
-    font-size: 18px;
   }
 }
