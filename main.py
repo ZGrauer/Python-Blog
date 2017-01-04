@@ -5,6 +5,7 @@ import random
 import string
 import hashlib
 import hmac
+import logging
 
 from google.appengine.ext import db
 
@@ -84,28 +85,30 @@ class BlogFront(BlogHandler):
 class PostPage(BlogHandler):
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-        post._render_text = post.content.replace('\n', '<br>')
-                   
+        post = db.get(key)        
         if not post:
             self.error(404)
             return
 
-        self.render_post(post)
+        comments = Comment.all().ancestor(post)
+        post._render_text = post.content.replace('\n', '<br>')  
+        self.render_post(post, comments)
 
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
         post._render_text = post.content.replace('\n', '<br>')
+        comments = Comment.all().ancestor(post)
+        
         post_action = self.request.get("action")
         if post_action=="like":
             post.likes += 1
             post.put()
-            self.render_post(post)
+            self.render_post(post, comments)
         elif post_action=="dislike":
             post.likes -= 1
             post.put()
-            self.render_post(post)
+            self.render_post(post, comments)
         elif post_action=="delete":
             if User.by_id(post.user_id).username == self.user.username:
                 post.delete()
@@ -116,14 +119,20 @@ class PostPage(BlogHandler):
                 post.content = self.request.get('content')
                 post.put()
                 self.redirect('/blog')
+        elif post_action=="add_comment":
+            c = Comment(parent = post.key(), user_id=self.user.key().id(),
+                        content = self.request.get("comment_content"))
+            c.put()
+            self.render_post(post, comments)
 
-    def render_post(self, post):
+    def render_post(self, post, comments):
         if self.user:
-            self.render("permalink.html", post = post,
+            self.render("permalink.html", post = post, comments = comments,
                         username = self.user.username,
                         post_username=User.by_id(post.user_id).username)
         else:
-            self.render("permalink.html", post = post, username = "Login",
+            self.render("permalink.html", post = post, comments = comments,
+                        username = "Login", 
                         post_username=User.by_id(post.user_id).username)
         
 class NewPost(BlogHandler):
@@ -225,6 +234,17 @@ class Post(db.Model):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("postoverview.html", p = self,
                           post_username=User.by_id(self.user_id).username)
+
+class Comment(db.Model):
+    '''
+    Defines comment for datastore.
+    '''
+    user_id = db.IntegerProperty(required = True)
+    content = db.TextProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+
+    def get_username(self):
+        return User.by_id(self.user_id).username
 
 class User(db.Model):
     '''

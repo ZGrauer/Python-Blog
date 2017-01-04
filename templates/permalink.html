@@ -1,79 +1,112 @@
 {% extends "front.html" %}
 
 {% block content %}
-<article class="post">
-  <div class="row post-heading">
-    <div class="col-xs-10">
-      <h3 class="post-title text-left">{{post.title | safe}}</h3>
+  <article class="post">
+    <div class="row post-heading">
+      <div class="col-xs-10">
+        <h3 class="post-title text-left">{{post.title | safe}}</h3>
+      </div>
+      <div class="col-xs-2">
+        <h4 class="post-date text-right">{{post.created.strftime("%b %d, %Y")}}</h4>
+      </div>
     </div>
-    <div class="col-xs-2">
-      <h4 class="post-date text-right">{{post.created.strftime("%b %d, %Y")}}</h4>
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="post-author">
+          By {{post_username}}
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="post-author">
-        By {{post_username}}
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="post-content">
+          {{post._render_text | safe}}
+        </div>
+      </div>
+    </div>
+    <p>Score <span class="badge">{{post.likes}}</span></p>
+  </article>
+  {% if user and username != post_username %}
+    <form method="post" class="post-control">
+      <button type="submit" name="action" value="like" class="btn btn-primary btn-sm">
+        <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+      </button>
+      <button type="submit" name="action" value="dislike" class="btn btn-primary btn-sm">
+        <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+      </button>
+    </form>
+  {% endif %}
+  {% if username == post_username %}
+    <form method="post" class="post-control">
+      <button type="button" name="edit" class="btn btn-default" data-toggle="modal" href="#edit">
+        Edit Post
+      </button>
+      <button type="submit" name="action" value="delete" class="btn btn-danger" onclick="return confirmDelete()">
+        Delete Post
+      </button>
+    </form>
+  {% endif %}
+
+  <div class="modal fade" id="edit" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button class="close" data-dismiss="modal">×</button>
+          <h3 class="modal-title">Edit Post</h3>
+        </div>
+        <div class="modal-body">
+          <form method="post">
+            <div class="form-group row">
+              <label for="title" class="col-xs-2 col-form-label">Title</label>
+              <div class="col-xs-10">
+                <input class="form-control" type="text" value="{{post.title | safe}}" name="title" id="title" placeholder="Title" required>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="content" class="col-xs-2 col-form-label">Content</label>
+              <div class="col-xs-10">
+                <textarea class="form-control" name="content" id="content" rows="15" placeholder="Content (HTML/Text)" required>{{post.content | safe}}</textarea>
+              </div>
+            </div>
+            <div class="error">{{error}}</div>
+            <button type="submit" class="btn btn-primary" name="action" value="edit">Edit</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="post-content">
-        {{post._render_text | safe}}
+
+{% if user %}
+  <form method="post" class="post-control">
+    <div class="form-group row">
+      <label for="content" class="col-xs-2 col-form-label">Comment</label>
+      <div class="col-xs-10">
+        <textarea class="form-control" name="comment_content" id="comment_content" rows="4" placeholder="Comment" required></textarea>
       </div>
     </div>
-  </div>
-  <p>Score <span class="badge">{{post.likes}}</span></p>
-</article>
-{% if username != post_username and username != "Login" %}
-  <form method="post">
-    <button type="submit" name="action" value="like" class="btn btn-primary btn-sm">
-      <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
-    </button>
-    <button type="submit" name="action" value="dislike" class="btn btn-primary btn-sm">
-      <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
-    </button>
-  </form>
-{% endif %}
-{% if username == post_username %}
-  <form method="post">
-    <button type="button" name="edit" class="btn btn-default" data-toggle="modal" href="#edit">
-      Edit Post
-    </button>
-    <button type="submit" name="action" value="delete" class="btn btn-danger" onclick="return confirmDelete()">
-      Delete Post
+    <button type="submit" name="action" value="add_comment" class="btn btn-primary">
+      Add Comment
     </button>
   </form>
 {% endif %}
 
-<div class="modal fade" id="edit" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button class="close" data-dismiss="modal">×</button>
-        <h3 class="modal-title">Edit Post</h3>
-      </div>
-      <div class="modal-body">
-        <form method="post">
-          <div class="form-group row">
-            <label for="title" class="col-xs-2 col-form-label">Title</label>
-            <div class="col-xs-10">
-              <input class="form-control" type="text" value="{{post.title | safe}}" name="title" id="title" placeholder="Title" required>
-            </div>
-          </div>
-          <div class="form-group row">
-            <label for="content" class="col-xs-2 col-form-label">Content</label>
-            <div class="col-xs-10">
-              <textarea class="form-control art-input" name="content" id="content" rows="15" placeholder="Content (HTML/Text)" required>{{post.content | safe}}</textarea>
-            </div>
-          </div>
-          <div class="error">{{error}}</div>
-          <button type="submit" class="btn btn-primary" name="action" value="edit">Edit</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Date</th>
+        <th>Comment</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in comments %}
+        <tr>
+          <td>{{c.get_username()}}</td>
+          <td>{{c.created.strftime("%b %d, %Y %H:%M")}}</td>
+          <td>{{c.content}}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
 {% endblock %}
