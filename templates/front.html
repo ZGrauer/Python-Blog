@@ -43,7 +43,7 @@
             <ul class="nav navbar-nav navbar-right">
               {% if username=="Login" %}
                 <li><a href="/blog/login">{{username}}</a></li>
-              {% else %}
+              {% elif username %}
                 <li class="navbar-brand">Welcome, {{username}}</li>
                 <li><a href="/blog/logout">Logout</a></li>
               {% endif %}

@@ -91,13 +91,7 @@ class PostPage(BlogHandler):
             self.error(404)
             return
 
-        if self.user:
-            self.render("permalink.html", post = post,
-                        username = self.user.username,
-                        post_username=User.by_id(post.user_id).username)
-        else:
-            self.render("permalink.html", post = post, username = "Login",
-                        post_username=User.by_id(post.user_id).username)
+        self.render_post(post)
 
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
@@ -107,9 +101,23 @@ class PostPage(BlogHandler):
         if post_action=="like":
             post.likes += 1
             post.put()
+            self.render_post(post)
         elif post_action=="dislike":
             post.likes -= 1
             post.put()
+            self.render_post(post)
+        elif post_action=="delete":
+            if User.by_id(post.user_id).username == self.user.username:
+                post.delete()
+                self.redirect('/blog')
+        elif post_action=="edit":
+            if User.by_id(post.user_id).username == self.user.username:
+                post.title = self.request.get('title')
+                post.content = self.request.get('content')
+                post.put()
+                self.redirect('/blog')
+
+    def render_post(self, post):
         if self.user:
             self.render("permalink.html", post = post,
                         username = self.user.username,
@@ -205,7 +213,7 @@ class Post(db.Model):
     title = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
     user_id = db.IntegerProperty(required = True)
-    likes = db.IntegerProperty(default=0)
+    likes = db.IntegerProperty(default=1)
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
     
