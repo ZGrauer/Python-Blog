@@ -779,7 +779,8 @@ def check_secure_val(h):
         return val
 
 
-app = webapp2.WSGIApplication([("/blog/?", BlogFront),
+app = webapp2.WSGIApplication([("/", BlogFront),
+                               ("/blog/?", BlogFront),
                                ("/blog/([0-9]+)", PostPage),
                                ("/blog/newpost", NewPost),
                                ("/blog/signup", Signup),
