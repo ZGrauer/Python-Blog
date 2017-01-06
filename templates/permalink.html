@@ -19,7 +19,7 @@
       <div class="col-xs-6">
         <div class="text-right like-area">
           <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true">
-          </span> <span class="badge">{{post.likes}}</span></div>
+          </span> <span class="badge">{{post.like_count()}}</span></div>
       </div>
     </div>
     <div class="row">
@@ -36,9 +36,6 @@
       <form method="post" class="post-control">
         <button type="submit" name="action" value="like" class="btn btn-primary btn-sm">
           <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
-        </button>
-        <button type="submit" name="action" value="dislike" class="btn btn-primary btn-sm">
-          <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
         </button>
       </form>
     {% endif %}

@@ -248,16 +248,16 @@ class PostPage(BlogHandler):
         
         key = db.Key.from_path("Post", int(post_id), parent=blog_key())
         post = db.get(key)
+        if not post:
+            self.error(404)
+            return
+        
         post._render_text = post.content.replace("\n", "<br>")
         comments = Comment.all().ancestor(post)
         
         post_action = self.request.get("action")
         if post_action=="like":
-            post.likes += 1
-            post.put()
-            self.render_post(post, comments)
-        elif post_action=="dislike":
-            post.likes -= 1
+            post.add_like(self.user.key().id())
             post.put()
             self.render_post(post, comments)
         elif post_action=="delete":
@@ -335,13 +335,15 @@ class NewPost(BlogHandler):
         '''
         
         if not self.user:
-            self.redirect("/blog")
-            
+            self.redirect("/blog/login")
+            return
+        
         title = self.request.get("title")
         content = self.request.get("content")
 
         if title and content:
             p = Post(parent = blog_key(), title = title, content = content,
+                     likes=[self.user.key().id()],
                      user_id=self.user.key().id())
             p.put()
             self.redirect("/blog/%s" % str(p.key().id()))
@@ -532,9 +534,35 @@ class Post(db.Model):
     title = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
     user_id = db.IntegerProperty(required = True)
-    likes = db.IntegerProperty(default=1)
+    likes = db.ListProperty(int,indexed=True,default=[])
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
+
+    def like_count(self):
+        return len(self.likes)
+        
+    def user_like_count(self, uid):
+        '''Checks if a user_id already liked a post
+
+        Args:
+            uid: Int user_id to find
+
+        Returns:
+            True if found in liked list
+        '''
+        return self.likes.count(uid)
+
+    def add_like(self, uid):
+        '''Checks if a user_id already liked a post
+
+        Args:
+            uid: Int user_id to find
+
+        Returns:
+            True if found in liked list
+        '''
+        if self.user_like_count(uid)==0:
+            self.likes.append(uid)
     
     def render_overview(self):
         '''Generate HTML for post data.
