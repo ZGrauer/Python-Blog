@@ -1,19 +1,14 @@
 import os
 import re
 import string
-import random
-import hashlib
-import hmac
 import jinja2
 import webapp2
-
-from google.appengine.ext import db
+import data
+import hashing
 
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                autoescape = True)
-
-SECRET = "LVFuBg9EM8Bq3cd992Tb5g01Uh30GCV2"
 
 def render_str(template, **params):
     '''Renders a jinja2 template with params to the browser.
@@ -47,13 +42,13 @@ class BlogHandler(webapp2.RequestHandler):
     '''
     
     def initialize(self, *a, **kw):
-        '''Checks for user cookie, if pressent set User object
+        '''Checks for user cookie, if pressent set data.User object
 
         Called before every request in appengine
         '''
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie("username")
-        self.user = uid and User.by_id(int(uid))
+        self.user = uid and data.User.by_id(int(uid))
 
     def write(self, *a, **kw):
         '''Write out string/HTML to browser
@@ -111,7 +106,7 @@ class BlogHandler(webapp2.RequestHandler):
         Returns:
             rendered page
         '''
-        cookie_val = make_secure_val(val)
+        cookie_val = hashing.make_secure_val(val)
         self.response.headers.add_header(
             "Set-Cookie",
             "%s=%s; Path=/" % (name, cookie_val))
@@ -128,7 +123,7 @@ class BlogHandler(webapp2.RequestHandler):
             String cookie value, undoing HMAC
         '''
         cookie_val = self.request.cookies.get(name)
-        return cookie_val and check_secure_val(cookie_val)
+        return cookie_val and hashing.check_secure_val(cookie_val)
 
     def login(self, user):
         ''' Sets the username cookie for the current user
@@ -136,7 +131,7 @@ class BlogHandler(webapp2.RequestHandler):
         Uses set_secure_cookie for HMAC
         
         Args:
-            user: User instance from DB
+            user: data.User instance from DB
 
         Returns:
             None
@@ -181,7 +176,7 @@ class BlogFront(BlogHandler):
         Returns:
             rendered page
         '''
-        posts = greetings = Post.all().order("-created")
+        posts = greetings = data.Post.all().order("-created")
         if self.user:
             self.render("blog.html", posts = posts,
                         username = self.user.username)
@@ -217,13 +212,12 @@ class PostPage(BlogHandler):
         Returns:
             rendered full post page with all comments
         '''
-        key = db.Key.from_path("Post", int(post_id), parent=blog_key())
-        post = db.get(key)        
+        post = data.Post.get_by_id(int(post_id), parent = data.blog_key())
         if not post:
             self.error(404)
             return
 
-        comments = Comment.all().ancestor(post)
+        comments = data.Comment.all().ancestor(post)
         post._render_text = post.content.replace("\n", "<br>")  
         self.render_post(post, comments)
 
@@ -233,9 +227,9 @@ class PostPage(BlogHandler):
         Handles the "action" from the valid user.
             like: add 1 to the post like count in DB. Not user's post
             dislike: subtract 1 from the post like count in DB. Not user's post
-            delete: deletes Post entity from DB, only for your own posts.
-            edit: edits Post entity in DB, only for your own posts.
-            add_comment: adds a Comment to DB for Post.  Any valid user
+            delete: deletes data.Post entity from DB, only for your own posts.
+            edit: edits data.Post entity in DB, only for your own posts.
+            add_comment: adds a Comment to DB for data.Post.  Any valid user
 
         If not a user, cannot add comment or like post
         
@@ -245,15 +239,17 @@ class PostPage(BlogHandler):
         Returns:
             rendered page
         '''
-        
-        key = db.Key.from_path("Post", int(post_id), parent=blog_key())
-        post = db.get(key)
+        post = data.Post.get_by_id(int(post_id), parent = data.blog_key())
         if not post:
             self.error(404)
             return
+
+        if not self.user:
+            self.render_post(post, comments)
+            return
         
         post._render_text = post.content.replace("\n", "<br>")
-        comments = Comment.all().ancestor(post)
+        comments = data.Comment.all().ancestor(post)
         
         post_action = self.request.get("action")
         if post_action=="like":
@@ -261,17 +257,17 @@ class PostPage(BlogHandler):
             post.put()
             self.render_post(post, comments)
         elif post_action=="delete":
-            if User.by_id(post.user_id).username == self.user.username:
+            if data.User.by_id(post.user_id).username == self.user.username:
                 post.delete()
                 self.redirect("/blog")
         elif post_action=="edit":
-            if User.by_id(post.user_id).username == self.user.username:
+            if data.User.by_id(post.user_id).username == self.user.username:
                 post.title = self.request.get("title")
                 post.content = self.request.get("content")
                 post.put()
                 self.redirect("/blog")
         elif post_action=="add_comment":
-            c = Comment(parent = post.key(), user_id=self.user.key().id(),
+            c = data.Comment(parent = post.key(), user_id=self.user.key().id(),
                         content = self.request.get("comment_content"))
             c.put()
             self.render_post(post, comments)
@@ -280,11 +276,11 @@ class PostPage(BlogHandler):
         if self.user:
             self.render("permalink.html", post = post, comments = comments,
                         username = self.user.username,
-                        post_username=User.by_id(post.user_id).username)
+                        post_username=data.User.by_id(post.user_id).username)
         else:
             self.render("permalink.html", post = post, comments = comments,
                         username = "Login", 
-                        post_username=User.by_id(post.user_id).username)
+                        post_username=data.User.by_id(post.user_id).username)
 
         
 class NewPost(BlogHandler):
@@ -298,7 +294,7 @@ class NewPost(BlogHandler):
     
     Methods:
         get: GET request to render new post page
-        post: POST response from new post form. Create Post entity, then 
+        post: POST response from new post form. Create data.Post entity, then 
             redirect to permalink for new post on blog
     '''
     
@@ -323,7 +319,7 @@ class NewPost(BlogHandler):
         '''Handles POST requests for new post page
 
         If not a user, redirect to main blog
-        Get values from user, create Post entity.
+        Get values from user, create data.Post entity.
         If not valid title & content, render page again with error.
         Else redirect to post's permalink
         
@@ -342,7 +338,7 @@ class NewPost(BlogHandler):
         content = self.request.get("content")
 
         if title and content:
-            p = Post(parent = blog_key(), title = title, content = content,
+            p = data.Post(parent = data.blog_key(), title = title, content = content,
                      likes=[self.user.key().id()],
                      user_id=self.user.key().id())
             p.put()
@@ -363,7 +359,7 @@ class Signup(BlogHandler):
     
     Methods:
         get: GET request to render signup page
-        post: POST response from signup form. Validate info & create User
+        post: POST response from signup form. Validate info & create data.User
     '''
     
     def get(self):
@@ -389,7 +385,7 @@ class Signup(BlogHandler):
         Verify username & passwords match regular expressions
         Verify both passwords match (confirm)
         Verify username doesn't already exist
-        If good, create User entity and cookie. redirect to blog
+        If good, create data.User entity and cookie. redirect to blog
         
         Args:
             None
@@ -411,10 +407,10 @@ class Signup(BlogHandler):
                       pwd1 = self.pwd1,
                       pwd2 = self.pwd2)
 
-        u = User.by_name(self.username)
+        u = data.User.by_name(self.username)
         
         if u:
-            params["error"] = "Username already exists!"
+            params["error"] = "data.Username already exists!"
             self.render("signup.html", **params)
         elif (not pwd_pattern.match(self.pwd1) or
               not pwd_pattern.match(self.pwd2)):
@@ -426,7 +422,7 @@ class Signup(BlogHandler):
             self.render("signup.html", **params)
         elif (self.username and self.pwd1 and self.pwd2
               and (self.pwd1 == self.pwd2)):           
-            u = User.register(self.username, self.pwd1, self.email)
+            u = data.User.register(self.username, self.pwd1, self.email)
             u.put()
             self.login(u)
             self.redirect("/blog")
@@ -479,7 +475,7 @@ class Login(BlogHandler):
         username = self.request.get("username")
         pwd = self.request.get("pwd")
 
-        u = User.login(username, pwd)
+        u = data.User.login(username, pwd)
         if u:
             self.login(u)
             self.redirect("/blog")
@@ -515,296 +511,6 @@ class Logout(BlogHandler):
         self.logout()
         self.redirect("/blog")
 
-
-class Post(db.Model):
-    '''Defines a Post object for the datastore.
-    
-    Attributes:
-        title: String for the title of a post
-        content: Text content to be displayed. Not indexed. Can be text or HTML
-        likes: Int count of the score/likes of the post
-        created: DateTime of when the entity was created
-        last_modified: DateTime of when the post was last modified
-    
-    Methods:
-        render_overview: renders the shortend post for the main blog page
-                        returns the rendered HTML for the template
-    '''
-    
-    title = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    user_id = db.IntegerProperty(required = True)
-    likes = db.ListProperty(int,indexed=True,default=[])
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    def like_count(self):
-        return len(self.likes)
-        
-    def user_like_count(self, uid):
-        '''Checks if a user_id already liked a post
-
-        Args:
-            uid: Int user_id to find
-
-        Returns:
-            True if found in liked list
-        '''
-        return self.likes.count(uid)
-
-    def add_like(self, uid):
-        '''Checks if a user_id already liked a post
-
-        Args:
-            uid: Int user_id to find
-
-        Returns:
-            True if found in liked list
-        '''
-        if self.user_like_count(uid)==0:
-            self.likes.append(uid)
-    
-    def render_overview(self):
-        '''Generate HTML for post data.
-
-        Replace user new lines with HTML breaks.
-        HTML in data not escaped in template
-        
-        Args:
-            None
-
-        Returns:
-            String HTML for post data. HTML in data not escaped in template
-        '''
-        self._render_text = self.content.replace("\n", "<br>")
-        return render_str("postoverview.html", p = self,
-                          post_username=User.by_id(self.user_id).username)
-
-
-class Comment(db.Model):
-    '''Defines a Comment object for the datastore.
-
-    Comments are the child to a Post. Post is the ancestor for Comment.
-    
-    Attributes:
-        user_id: Int the user who wrote the comment. ID matches a User object
-        content: Text content to be displayed. Not indexed.
-        created: DateTime of when the comment was created
-    
-    Methods:
-        get_username: returns the username for the comment based on user_id
-    '''
-    
-    user_id = db.IntegerProperty(required = True)
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-
-    def get_username(self):
-        '''Returns the username for a comment
-
-        Args:
-            None
-
-        Returns:
-            String username based on the ID from the comment
-        '''
-        return User.by_id(self.user_id).username
-
-
-class User(db.Model):
-    '''Defines a User object for the datastore.
-
-    Users are created in the "default" group using users_key() function
-    
-    Attributes:
-        username: String name for the user. 3 to 20 alpha
-        password: Text content to be displayed. Not indexed.  8 alpha numeric
-        email: Text of users optional email. Not indexed
-        created: DateTime of when the account was created
-        last_modified: DateTime of when the user last modified
-    
-    Class Methods:
-        by_id: returns User object by entity ID
-        by_name: returns User object by username
-        register: returns User object with the password hashed.  SHA256 w/ salt
-        login: returns User object after verifying password against hash
-    '''
-    
-    username = db.StringProperty(required = True)
-    password = db.TextProperty(required = True)
-    email = db.TextProperty()
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    @classmethod
-    def by_id(cls, uid):
-        '''Returns an existing User object based on ID
-
-        Args:
-            uid: ID for user entity in datastore
-
-        Returns:
-            User object. No password verified
-        '''
-        return User.get_by_id(uid, parent = users_key())
-
-    @classmethod
-    def by_name(cls, name):
-        '''Returns an existing User object based on username
-
-        Args:
-            name: String username to find
-
-        Returns:
-            User object. No password verified
-        '''
-        u = User.all().filter("username =", name).get()
-        return u
-
-    @classmethod
-    def register(cls, name, pw, email = None):
-        '''Returns a new User object
-
-        Args:
-            name: String username
-            pw: String cleartext password
-            email: String.  Default is None
-
-        Returns:
-            After hashing the password using SHA256 with random salt,
-            a new User object is returned.
-        '''
-        
-        pw_hash = make_pw_hash(name, pw)
-        return User(parent = users_key(),
-                    username = name,
-                    password = pw_hash,
-                    email = email)
-
-    @classmethod
-    def login(cls, name, pw):
-        '''Returns an existing User object by name if password is correct
-
-        Args:
-            name: String username for existing account
-            pw: String cleartext password
-
-        Returns:
-            After verifying the user exists and that the password is correct,
-            a User object is returned for the named user account.
-        '''
-        
-        u = cls.by_name(name)
-        if u and valid_pw(name, pw, u.password):
-            return u
-
-
-def users_key(group = "default"):
-    '''Gets parent in DB for all users
-
-    Args:
-        group: String group name for user seperation.  Default is default
-
-    Returns:
-        Parent key for all users.
-    '''
-    return db.Key.from_path("users", group)
-
-def blog_key(name = "default"):
-    '''Gets parent for blog in datastore
-
-    Set name param for multiple blogs.
-
-    Args:
-        name: String name for blog seperation.  Default is default
-
-    Returns:
-        Parent key for blog.
-    '''
-    return db.Key.from_path("blogs", name)
-
-def make_salt():
-    '''Makes random string of letters for password salts
-
-    Args:
-        None
-
-    Returns:
-        String of 5 random letters
-    '''
-    return "".join(random.choice(string.letters) for x in xrange(5))
-
-def make_pw_hash(name, pw, salt = None):
-    '''Hash password with SHA256 using name & salt
-
-    Args:
-        name: String username
-        pw: String cleartext password
-        salt: String, optional. If none one is generated.
-
-    Returns:
-        String of hashed password with salt, seperated by comma
-    '''
-    if not salt:
-        salt = make_salt()
-    h = hashlib.sha256(name + pw + salt).hexdigest()
-    return "%s,%s" % (h, salt)
-
-def valid_pw(name, pw, h):
-    '''Checks if a password matches a hash
-
-    Args:
-        name: String username
-        pw: String cleartext password
-        h: String, hash of password
-
-    Returns:
-        True if cleartext password equals the hashed password
-    '''
-    salt = h.split(",")[1]
-    if h==make_pw_hash(name, pw, salt):
-        return True
-
-def hash_str(s):
-    '''Hash a string using HMAC
-
-    Used for cookies.  Uses SECRET value at top
-
-    Args:
-        s: String to be hashed
-
-    Returns:
-        hash digest for HMAC on string
-    '''
-    return hmac.new(SECRET,s).hexdigest()
-
-def make_secure_val(s):
-    '''Add a HMAC hash digest to string
-
-    Used for cookies
-
-    Args:
-        s: String to have hash added
-
-    Returns:
-        String with HMAC of string.  Seperated by pipe "|"
-    '''
-    return "%s|%s" % (s, hash_str(s))
-
-def check_secure_val(h):
-    '''Verifies cookie is valid using HMAC
-
-    Used for cookies
-
-    Args:
-        h: String cookie value.  "string|hash"
-
-    Returns:
-        String cookie value without hash
-    '''
-    val = h.split("|")[0]
-    if h == make_secure_val(val):
-        return val
 
 
 app = webapp2.WSGIApplication([("/", BlogFront),

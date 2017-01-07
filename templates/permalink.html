@@ -18,8 +18,17 @@
       </div>
       <div class="col-xs-6">
         <div class="text-right like-area">
-          <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true">
-          </span> <span class="badge">{{post.like_count()}}</span></div>
+          {% if user and username != post_username %}
+            <form method="post" class="form-inline">
+              <button type="submit" name="action" value="like" class="btn btn-default btn-sm">
+                <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+              </button>
+              </span> <span class="badge">{{post.like_count()}}</span></div>
+            </form>
+          {% else %}
+            <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true">
+            </span> <span class="badge">{{post.like_count()}}</span></div>
+          {% endif %}
       </div>
     </div>
     <div class="row">
@@ -32,13 +41,7 @@
   </article>
 
   <div class="row">
-    {% if user and username != post_username %}
-      <form method="post" class="post-control">
-        <button type="submit" name="action" value="like" class="btn btn-primary btn-sm">
-          <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
-        </button>
-      </form>
-    {% endif %}
+
     {% if username == post_username %}
       <form method="post" class="post-control">
         <button type="button" name="edit" class="btn btn-default" data-toggle="modal" href="#edit">
