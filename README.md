@@ -52,7 +52,7 @@ $ gcloud app deploy
 
 ## Todos
 - [ ] Add user roles so only some users can post articles
-- [ ] Add like/dislike tracking to block multiple likes/dislikes
+- [X] Add like/dislike tracking to block multiple likes/dislikes
 - [ ] Add user administration functionality
 
 ## License
