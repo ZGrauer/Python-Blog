@@ -105,6 +105,9 @@
             <th>User</th>
             <th class="table-hide-col">Date</th>
             <th>Comment</th>
+            {% if user %}
+              <th>Edit/Delete</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -112,12 +115,32 @@
             <tr>
               <td>{{c.get_username()}}</td>
               <td class="table-hide-col">{{c.created.strftime("%b %d, %Y %H:%M")}}</td>
-              <td>{{c.content}}</td>
+              {% if user %}
+                {% if c.user_id == user.key().id() %}
+                    <form method="post" id="{{c.key().id()}}_form" class="form-inline">
+                      <td id="{{c.key().id()}}_comment_content" name="{{c.key().id()}}" class="editable">{{c.content}}</td>
+                      <td>
+                      <button type="submit" id="{{c.key().id()}}_edit_btn" name="edit_comment" value="{{c.key().id()}}" class="btn btn-default btn-xs edit_comment" onclick="return editComment('{{c.key().id()}}');" >
+                        Edit
+                      </button>
+                      <button type="submit" name="delete_comment" value="{{c.key().id()}}" class="btn btn-danger btn-xs" onclick="return confirmDelete()">
+                        Delete
+                      </button>
+                      </td>
+                    </form>
+                {% else %}
+                  <td name="{{c.key().id()}}" class="editable">{{c.content}}</td>
+                  <td></td>
+                {% endif %}
+              {% else %}
+                <td name="{{c.key().id()}}" class="editable">{{c.content}}</td>
+              {% endif %}
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+
 
 {% endblock %}

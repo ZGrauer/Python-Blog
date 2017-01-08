@@ -5,6 +5,7 @@ import jinja2
 import webapp2
 import data
 import hashing
+import logging
 
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -217,7 +218,7 @@ class PostPage(BlogHandler):
             self.error(404)
             return
 
-        comments = data.Comment.all().ancestor(post)
+        comments = data.Comment.all().ancestor(post).order("-created")
         post._render_text = post.content.replace("\n", "<br>")  
         self.render_post(post, comments)
 
@@ -230,8 +231,9 @@ class PostPage(BlogHandler):
             delete: deletes data.Post entity from DB, only for your own posts.
             edit: edits data.Post entity in DB, only for your own posts.
             add_comment: adds a Comment to DB for data.Post.  Any valid user
-
-        If not a user, cannot add comment or like post
+            edit_comment: edits a comment only by the author. Val is ID
+            delete_comment: deletes a comment only by the author. Val is ID
+        If not a user, cannot add/edit/delete comment or like post
         
         Args:
             None
@@ -249,9 +251,11 @@ class PostPage(BlogHandler):
             return
         
         post._render_text = post.content.replace("\n", "<br>")
-        comments = data.Comment.all().ancestor(post)
+        comments = data.Comment.all().ancestor(post).order("-created")
         
         post_action = self.request.get("action")
+        edit_comment = self.request.get("edit_comment")
+        delete_comment = self.request.get("delete_comment")
         if post_action=="like":
             post.add_like(self.user.key().id())
             post.put()
@@ -271,6 +275,30 @@ class PostPage(BlogHandler):
                         content = self.request.get("comment_content"))
             c.put()
             self.render_post(post, comments)
+        elif edit_comment:
+            # Get specific comment edited based on the ID in btn value
+            comment = data.Comment.get_by_id(long(edit_comment),
+                                             parent = post.key())
+            if not comment:
+                self.render_post(post, comments)
+                return
+            if data.User.by_id(comment.user_id).username == self.user.username:
+                comment_content = self.request.get(str(comment.key().id()))
+                comment.content = comment_content
+                comment.put()
+                comments = data.Comment.all().ancestor(post).order("-created")
+                self.render_post(post, comments)
+        elif delete_comment:
+            # Get specific comment to delete based on the ID in btn value
+            comment = data.Comment.get_by_id(long(delete_comment),
+                                             parent = post.key())
+            if not comment:
+                self.render_post(post, comments)
+                return
+            if data.User.by_id(comment.user_id).username == self.user.username:
+                comment.delete()
+                comments = data.Comment.all().ancestor(post).order("-created")
+                self.render_post(post, comments)
 
     def render_post(self, post, comments):
         if self.user:
